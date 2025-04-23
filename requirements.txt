@@ -1,2 +1,4 @@
 Django==5.2
 environs==14.1.1
+phonenumbers==8.13.54
+django-phonenumber-field==8.0.0

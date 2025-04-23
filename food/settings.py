@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'food_models',
+    'phonenumber_field',
 ]
 
 MIDDLEWARE = [
