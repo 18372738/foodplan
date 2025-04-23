@@ -82,25 +82,31 @@ class Dish(models.Model):
         verbose_name='описание блюда'
     )
 
+    class Meta:
+        verbose_name = 'блюда'
+
+    def __str__(self):
+        return self.title
+
 
 class Menu(models.Model):
     breakfast = models.ForeignKey(
         Dish,
         verbose_name='завтрак',
         on_delete=models.CASCADE,
-        related_name='menus'
+        related_name='breakfast_menu'
     )
     lunch = models.ForeignKey(
         Dish,
         verbose_name='обед',
         on_delete=models.CASCADE,
-        related_name='menus'
+        related_name='lunch_menu'
     )
     dinner = models.ForeignKey(
         Dish,
         verbose_name='ужин',
         on_delete=models.CASCADE,
-        related_name='menus'
+        related_name='dinner_menu'
     )
     allergy = models.ForeignKey(
         Allergy,
