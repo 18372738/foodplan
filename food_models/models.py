@@ -29,19 +29,16 @@ class Ingredient(models.Model):
 
 
 class Client(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='client')
-    full_name = models.CharField(
-        verbose_name='фио'
+    name = models.CharField(
+        verbose_name='Имя'
     )
     mail = models.CharField(
         verbose_name='почта',
         max_length=100,
     )
-    phone_number = PhoneNumberField(
-        verbose_name='номер клиента'
+    password = models.CharField(
+        verbose_name='Пароль',
+        max_length=30,
     )
 
     class Meta:
@@ -49,7 +46,7 @@ class Client(models.Model):
         verbose_name_plural = 'клиенты'
 
     def __str__(self):
-        return f'{self.full_name} - {self.phone_number}'
+        return f'{self.name} - {self.mail}'
 
 
 class Allergy(models.Model):

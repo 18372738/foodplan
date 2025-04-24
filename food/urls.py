@@ -10,6 +10,9 @@ from food_models.views import order_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index),
     path('order/', order_view, name='order'),
+    path('', views.index, name='index'),
+    path('registration/', views.registration, name='registration'),
+    path('auth/', views.auth, name='auth'),
+    path('lk/', views.lk, name='lk'),
 ]

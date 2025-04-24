@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 
 <head>
@@ -17,7 +18,7 @@
                 <a class="navbar-brand" href="#">
                     <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
                 </a>
-                <button class="btn btn-outline-success foodplan_green foodplan__border_green">Выйти</button>
+                <a href="{% url 'index' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">Выйти</button>
             </div>
         </nav>
     </header>
@@ -40,7 +41,7 @@
                         </div>
                         <h3 class="card-title text-center">Tim</h3>
                         <div class="d-block">
-                            <button class="btn btn-outline-success foodplan_green foodplan__border_green">Выйти</button>
+                            <a href="{% url 'index' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">Выйти</a>
                         </div>
                     </div>
 
