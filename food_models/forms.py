@@ -1,5 +1,5 @@
 from django import forms
-from .models import MealPlanOrder, Allergy
+from .models import MealPlanOrder
 
 class MealPlanOrderForm(forms.ModelForm):
     class Meta:
@@ -12,7 +12,6 @@ class MealPlanOrderForm(forms.ModelForm):
             'include_dessert',
             'new_year_menu',
             'persons',
-            'allergies',
         ]
         widgets = {
             'allergies': forms.CheckboxSelectMultiple()

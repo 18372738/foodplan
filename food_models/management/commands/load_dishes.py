@@ -16,6 +16,7 @@ class Command(BaseCommand):
             dishes, created = Dish.objects.update_or_create(
                 title=dish['title'],
                 img=dish['img'],
+                category=dish['category'],
                 description=dish['description']
             )
             if created:

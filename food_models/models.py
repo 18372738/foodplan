@@ -1,7 +1,12 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from phonenumber_field.modelfields import PhoneNumberField
-from django.contrib.auth.models import User
+
+
+CATEGORIES = [
+    ('breakfast', 'завтраки'),
+    ('lunch', 'обеды'),
+    ('dinner', 'ужины')
+]
 
 
 class Ingredient(models.Model):
@@ -49,24 +54,6 @@ class Client(models.Model):
         return f'{self.name} - {self.mail}'
 
 
-class Allergy(models.Model):
-    ingredient = models.ForeignKey(
-        Ingredient,
-        verbose_name='ингредиент',
-        on_delete=models.PROTECT,
-        related_name='allergy_ingredients',
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        verbose_name = 'аллергичный ингредиент'
-        verbose_name_plural = 'аллергичные ингредиенты'
-
-    def __str__(self):
-        return self.ingredient.name
-
-
 class Dish(models.Model):
     title = models.CharField(
         verbose_name='название блюда',
@@ -77,6 +64,11 @@ class Dish(models.Model):
     )
     description = models.TextField(
         verbose_name='описание блюда'
+    )
+    category = models.CharField(
+        verbose_name='категория',
+        max_length=100,
+        choices=CATEGORIES
     )
 
     class Meta:
@@ -104,11 +96,6 @@ class Menu(models.Model):
         verbose_name='ужин',
         on_delete=models.CASCADE,
         related_name='dinner_menu'
-    )
-    allergy = models.ForeignKey(
-        Allergy,
-        on_delete=models.PROTECT,
-        related_name='menus'
     )
 
     class Meta:
@@ -171,7 +158,7 @@ class Order(models.Model):
         verbose_name_plural = 'заказы'
 
     def __str__(self):
-        return f'{self.client.full_name} - {self.address} - {self.client.phone_number}'
+        return f'{self.client.name} - {self.address}'
 
 
 class MealPlanOrder(models.Model):
@@ -183,6 +170,5 @@ class MealPlanOrder(models.Model):
     include_dessert = models.BooleanField()
     new_year_menu = models.BooleanField()
     persons = models.IntegerField(default=1)
-    allergies = models.ManyToManyField(Allergy, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     total_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)

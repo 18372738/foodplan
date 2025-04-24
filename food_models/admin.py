@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Client, Dish, Ingredient
+from .models import Client, Dish, Ingredient, Recept
+
+
+class ReceptInline(admin.TabularInline):
+    model = Recept
+    extra = 5
 
 
 @admin.register(Client)
@@ -18,10 +23,12 @@ class DishAdmin(admin.ModelAdmin):
     fields = [
         'title',
         'description',
+        'category',
         'img',
         'get_preview'
     ]
     readonly_fields = ['get_preview']
+    inlines = [ReceptInline]
 
     def get_preview(self, obj):
         return format_html(
