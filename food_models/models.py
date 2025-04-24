@@ -80,7 +80,7 @@ class Dish(models.Model):
     )
 
     class Meta:
-        verbose_name = 'блюда'
+        verbose_name_plural = 'блюда'
 
     def __str__(self):
         return self.title
