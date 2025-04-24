@@ -175,3 +175,17 @@ class Order(models.Model):
 
     def __str__(self):
         return f'{self.client.full_name} - {self.address} - {self.client.phone_number}'
+
+
+class MealPlanOrder(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    duration_months = models.IntegerField(choices=[(3, '3 мес'), (12, '12 мес')])
+    include_breakfast = models.BooleanField()
+    include_lunch = models.BooleanField()
+    include_dinner = models.BooleanField()
+    include_dessert = models.BooleanField()
+    new_year_menu = models.BooleanField()
+    persons = models.IntegerField(default=1)
+    allergies = models.ManyToManyField(Allergy, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
