@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Client, Dish
+from .models import Client, Dish, Ingredient
 
 
 @admin.register(Client)
@@ -30,3 +30,8 @@ class DishAdmin(admin.ModelAdmin):
             '200px',
         )
     get_preview.short_description = 'превью'
+
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ['name', 'unit', 'price']
