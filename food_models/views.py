@@ -37,7 +37,7 @@ def registration(request):
             mail=mail,
             password=password
         )
-        return redirect('lk')
+        return redirect('auth')
 
     return render(request, 'registration.html')
 
@@ -47,6 +47,7 @@ def auth(request):
         mail = request.POST.get('mail')
         try:
             client = Client.objects.get(mail=mail)
+            request.session['client_id'] = client.id
             return redirect('lk')
         except Client.DoesNotExist:
             return redirect('registration')
@@ -55,4 +56,35 @@ def auth(request):
 
 
 def lk(request):
-    return render(request, 'lk.html')
+    client_id = request.session.get('client_id')
+    client = Client.objects.get(id=client_id)
+
+    return render(request, 'lk.html', {'client': client})
+
+
+def update_profile(request):
+    client_id = request.session.get('client_id')
+    client = Client.objects.get(id=client_id)
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+
+        if password and password != password_confirm:
+            return render(request, 'lk.html', {
+                'client': client,
+                'error': 'Пароли не совпадают'
+            })
+
+        client = Client.objects.get(id=client_id)
+        client.name = name
+        client.mail = email
+        if password:
+            client.password = password
+        client.save()
+
+        return redirect('lk')
+
+    return redirect('lk')
