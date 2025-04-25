@@ -16,4 +16,5 @@ urlpatterns = [
     path('auth/', views.auth, name='auth'),
     path('lk/', views.lk, name='lk'),
     path('update-profile/', views.update_profile, name='update_profile'),
+    path('api/calculate-price/', views.calculate_price_api, name='calculate_price_api')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

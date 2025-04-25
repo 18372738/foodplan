@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from .forms import MealPlanOrderForm
-from .models import Client, MealPlanOrder
+from django.http import JsonResponse
 
+from .forms import MealPlanOrderForm
+from .models import Client, MealPlanOrder, OptionPrice
 from .models import Client
+
+
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -15,15 +18,32 @@ def order_view(request):
         form = MealPlanOrderForm(request.POST)
         if form.is_valid():
             order = form.save(commit=False)
-            order.client = Client.objects.first()  # временно — без request.user
-            order.total_cost = 0
+            order.client = Client.objects.first()
+            total_price = calculate_price_from_form(request.POST)
+            order.total_cost = total_price
             order.save()
             form.save_m2m()
-            return redirect('success')
+            return render(request, 'order.html', {'form': form, 'price': total_price})
     else:
-        form = MealPlanOrderForm()
+        if request.GET.get("select1") is not None:
+            # пользователь что-то выбрал → считаем по GET
+            total_price = calculate_price_from_form(request.GET)
+            form = MealPlanOrderForm(request.GET)
+        else:
+            # первый заход → дефолт
+            dummy_data = {
+                'select1': '0',
+                'select2': '0',
+                'select3': '0',
+                'select4': '0',
+                'select5': '0',
+                'select6': '0',
+            }
+            total_price = calculate_price_from_form(dummy_data)
+            form = MealPlanOrderForm()
 
-    return render(request, 'order.html', {'form': form})
+    return render(request, 'order.html', {'form': form, 'price': total_price})
+
 
 
 def registration(request):
@@ -88,3 +108,33 @@ def update_profile(request):
         return redirect('lk')
 
     return redirect('lk')
+
+
+def get_option_price(option_key):
+    return OptionPrice.objects.get(option=option_key).price
+
+def calculate_price_from_form(post_data):
+    base_price = 0
+
+    if post_data.get("select1") == "0":
+        base_price += get_option_price("breakfast")
+    if post_data.get("select2") == "0":
+        base_price += get_option_price("lunch")
+    if post_data.get("select3") == "0":
+        base_price += get_option_price("dinner")
+    if post_data.get("select4") == "0":
+        base_price += get_option_price("dessert")
+    if post_data.get("select5") == "0":
+        base_price += get_option_price("new_year")
+
+    persons = int(post_data.get("select6") or 0) + 1
+    duration = int(post_data.get("duration") or 3)
+    total_price = base_price * persons * duration
+
+    return total_price
+
+
+def calculate_price_api(request):
+    if request.method == 'GET':
+        total = calculate_price_from_form(request.GET)
+        return JsonResponse({'price': float(total)})

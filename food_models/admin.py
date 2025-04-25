@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
 
-from .models import Client, Dish, Ingredient, Recept
+from .models import Client, Dish, Ingredient, Recept, MealPlanOrder, OptionPrice
 
 
 class ReceptInline(admin.TabularInline):
@@ -61,3 +61,28 @@ class DishAdmin(admin.ModelAdmin):
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ['name', 'unit', 'price']
+
+
+@admin.register(MealPlanOrder)
+class MealPlanOrderAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'client',
+        'duration_months',
+        'include_breakfast',
+        'include_lunch',
+        'include_dinner',
+        'include_dessert',
+        'persons',
+        'total_cost',
+        'created_at',
+    )
+    list_filter = ('duration_months', 'include_breakfast', 'include_lunch', 'include_dinner')
+    search_fields = ('id', 'client__name')
+
+
+    from .models import OptionPrice
+
+@admin.register(OptionPrice)
+class OptionPriceAdmin(admin.ModelAdmin):
+    list_display = ('option', 'price')
