@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django import forms
 
 from .models import Client, Dish, Ingredient, Recept
 
@@ -9,9 +10,27 @@ class ReceptInline(admin.TabularInline):
     extra = 5
 
 
+class ClientAdminForm(forms.ModelForm):
+    password = forms.CharField(
+        label="Пароль",
+        widget=forms.PasswordInput(render_value=True),
+        required=False
+    )
+
+    class Meta:
+        model = Client
+        fields = '__all__'
+
+
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     list_display = ('name', 'mail',)
+    form = ClientAdminForm
+
+    def save_model(self, request, obj, form, change):
+        if form.cleaned_data.get('password'):
+            obj.password = form.cleaned_data['password']
+        obj.save()
 
 
 @admin.register(Dish)
