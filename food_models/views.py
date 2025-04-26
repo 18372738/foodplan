@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
 from django.utils import timezone
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 from .forms import MealPlanOrderForm
 from .models import Client, MealPlanOrder, OptionPrice, Dish
@@ -37,7 +39,7 @@ def order_view(request):
                 'select3': '0',
                 'select4': '0',
                 'select5': '0',
-                'select6': '0',
+                # 'select6': '0',
             }
             total_price = calculate_price_from_form(dummy_data)
             form = MealPlanOrderForm()
@@ -77,9 +79,31 @@ def auth(request):
 
 def lk(request):
     client_id = request.session.get('client_id')
-    client = Client.objects.get(id=client_id)
+    try:
+        client = Client.objects.get(id=client_id)
+        try:
+            order = MealPlanOrder.objects.get(client=client)
+            end_date = order.created_at + relativedelta(months=order.duration_months)
+            dishes = {
+                'Завтрак': Dish.objects.filter(category='breakfast'),
+                'Обед': Dish.objects.filter(category='lunch'),
+                'Ужин': Dish.objects.filter(category='dinner'),
+                'Десерт': Dish.objects.filter(category='dessert'),
+            }
+            return render(request, 'lk.html', {
+                'client': client,
+                'order': order,
+                'dishes': dishes,
+                'end_date': end_date,
+            })
 
-    return render(request, 'lk.html', {'client': client})
+        except MealPlanOrder.DoesNotExist:
+            return render(request, 'lk.html', {
+                'client': client,
+                'message': 'У этого клиента нет активного заказа.',
+            })
+    except Client.DoesNotExist:
+        pass
 
 
 def update_profile(request):
@@ -124,10 +148,10 @@ def calculate_price_from_form(post_data):
         base_price += get_option_price("dinner")
     if post_data.get("select4") == "0":
         base_price += get_option_price("dessert")
-    if post_data.get("select5") == "0":
-        base_price += get_option_price("new_year")
+    # if post_data.get("select5") == "0":
+    #     base_price += get_option_price("new_year")
 
-    persons = int(post_data.get("select6") or 0) + 1
+    persons = int(post_data.get("select5") or 0) + 1
     duration = int(post_data.get("duration") or 3)
     total_price = base_price * persons * duration
 

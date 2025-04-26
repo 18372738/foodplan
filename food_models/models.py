@@ -5,21 +5,11 @@ from django.db.models.functions import Round
 
 
 CATEGORIES = [
-    ('breakfast', 'завтраки'),
-    ('lunch', 'обеды'),
-    ('dinner', 'ужины')
+    ('breakfast', 'Завтрак'),
+    ('lunch', 'Обед'),
+    ('dinner', 'Ужин'),
+    ('dessert', 'Десерт'),
 ]
-
-
-class DishQuerySet(models.QuerySet):
-    def get_total_price(self):
-        total_price = self.annotate(
-            price=Round(Sum(
-                F('recepts__ingredients__price') * F('recepts__quantity')
-                )
-            )
-        )
-        return total_price
 
 
 class Ingredient(models.Model):
@@ -83,10 +73,14 @@ class Dish(models.Model):
         max_length=100,
         choices=CATEGORIES
     )
-    objects = DishQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = 'блюда'
+
+    def get_total_price(self):
+        return self.recepts.aggregate(
+            total=Round(Sum(F('ingredients__price') * F('quantity')))
+        )['total'] or 0
 
     def __str__(self):
         return self.title
@@ -142,41 +136,6 @@ class Recept(models.Model):
         return self.dish.title
 
 
-class Order(models.Model):
-    client = models.ForeignKey(
-        Client,
-        verbose_name='клиент',
-        on_delete=models.PROTECT,
-        related_name='orders'
-    )
-    address = models.CharField(
-        verbose_name='адрес заказа',
-        max_length=100,
-    )
-    total_cost = models.DecimalField(
-        verbose_name='общая стоимость',
-        max_digits=8,
-        decimal_places=2
-    )
-    registered_at = models.DateTimeField(
-        verbose_name='дата регистрации',
-        auto_now_add=True,
-        db_index=True,
-    )
-    recept = models.ForeignKey(
-        Recept,
-        on_delete=models.CASCADE,
-        verbose_name='рецепт'
-    )
-
-    class Meta:
-        verbose_name = 'заказ'
-        verbose_name_plural = 'заказы'
-
-    def __str__(self):
-        return f'{self.client.name} - {self.address}'
-
-
 class MealPlanOrder(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     duration_months = models.IntegerField(choices=[(3, '3 мес'), (12, '12 мес')])
@@ -189,6 +148,20 @@ class MealPlanOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     total_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
+    def get_selected_meals(self):
+        meals = []
+        if self.include_breakfast:
+            meals.append('Завтрак')
+        if self.include_lunch:
+            meals.append('Обед')
+        if self.include_dinner:
+            meals.append('Ужин')
+        if self.include_dessert:
+            meals.append('Десерт')
+        return meals
+
+    def __str__(self):
+        return f'{self.client.name} - {self.created_at}'
 
 
 class OptionPrice(models.Model):
