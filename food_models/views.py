@@ -1,12 +1,12 @@
+import random
+
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
+from django.utils import timezone
 
 from .forms import MealPlanOrderForm
-from .models import Client, MealPlanOrder, OptionPrice
-from .models import Client
-
-
+from .models import Client, MealPlanOrder, OptionPrice, Dish
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -138,3 +138,14 @@ def calculate_price_api(request):
     if request.method == 'GET':
         total = calculate_price_from_form(request.GET)
         return JsonResponse({'price': float(total)})
+
+
+def show_random_recipe(request):
+    all_dishes = list(Dish.objects.get_total_price())
+    today = timezone.now().date()
+    random.seed(today.toordinal())
+    selected_dish = random.choice(all_dishes)
+
+    context = {'recept': selected_dish}
+
+    return render(request, 'recept.html', context)

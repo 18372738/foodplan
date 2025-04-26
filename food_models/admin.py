@@ -7,6 +7,7 @@ from .models import Client, Dish, Ingredient, Recept, MealPlanOrder, OptionPrice
 
 class ReceptInline(admin.TabularInline):
     model = Recept
+    raw_id_fields = ['ingredients']
     extra = 5
 
 

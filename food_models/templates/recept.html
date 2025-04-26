@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section>
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-md-4 d-flex justify-content-center">
+                <div class="card foodplan__card_borderless">
+                    <img src="{{recept.img.url}}" alt="">
+                </div>
+            </div>
+            <div class="col-12 col-md-6 d-flex flex-column">
+                <h2>{{recept.title}}</h2>
+                <h5>Ингредиенты:</h5>
+                <ul class="list-group list-group-flush">
+                    {% for item in recept.recepts.all %}
+                    <li class="list-group-item">{{item.ingredients}} - {{item.quantity}} {{item.ingredients.unit}}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-12">
+                <h4>Описание блюда</h4>
+                {{recept.description}}
+                <h6>Себестоимость блюда: {{recept.price}} р.</h6>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
