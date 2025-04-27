@@ -137,24 +137,38 @@ def update_profile(request):
 def get_option_price(option_key):
     return OptionPrice.objects.get(option=option_key).price
 
+
 def calculate_price_from_form(post_data):
     base_price = 0
 
+    def get(option_key):
+        try:
+            return OptionPrice.objects.get(option=option_key).price
+        except OptionPrice.DoesNotExist:
+            return 0
+
     if post_data.get("select1") == "0":
-        base_price += get_option_price("breakfast")
+        base_price += get("breakfast")
     if post_data.get("select2") == "0":
-        base_price += get_option_price("lunch")
+        base_price += get("lunch")
     if post_data.get("select3") == "0":
-        base_price += get_option_price("dinner")
+        base_price += get("dinner")
     if post_data.get("select4") == "0":
-        base_price += get_option_price("dessert")
-    # if post_data.get("select5") == "0":
-    #     base_price += get_option_price("new_year")
+        base_price += get("dessert")
 
-    persons = int(post_data.get("select5") or 0) + 1
-    duration = int(post_data.get("duration") or 3)
+    persons_raw = post_data.get("select6")
+    if persons_raw is not None:
+        persons = int(persons_raw) + 1
+    else:
+        persons = 1
+
+    duration_raw = post_data.get("duration")
+    if duration_raw is not None:
+        duration = int(duration_raw)
+    else:
+        duration = 3
+
     total_price = base_price * persons * duration
-
     return total_price
 
 
