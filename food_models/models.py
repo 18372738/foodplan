@@ -77,10 +77,11 @@ class Dish(models.Model):
     class Meta:
         verbose_name_plural = 'блюда'
 
-    def get_total_price(self):
-        return self.recepts.aggregate(
+    def get_total_price(self, persons=1):
+        total = self.recepts.aggregate(
             total=Round(Sum(F('ingredients__price') * F('quantity')))
         )['total'] or 0
+        return total * persons
 
     def __str__(self):
         return self.title
@@ -132,6 +133,9 @@ class Recept(models.Model):
         verbose_name = 'ингредиент блюда'
         verbose_name_plural = 'ингредиенты блюд'
 
+    def get_total_quantity(self, persons=1):
+        return self.quantity * persons
+
     def __str__(self):
         return self.dish.title
 
@@ -159,6 +163,18 @@ class MealPlanOrder(models.Model):
         if self.include_dessert:
             meals.append('Десерт')
         return meals
+
+    def get_count_meals(self):
+        count = 0
+        if self.include_breakfast:
+            count += 1
+        if self.include_lunch:
+            count += 1
+        if self.include_dinner:
+            count += 1
+        if self.include_dessert:
+            count += 1
+        return count
 
     def __str__(self):
         return f'{self.client.name} - {self.created_at}'

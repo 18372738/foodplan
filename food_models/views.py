@@ -3,6 +3,7 @@ import random
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
+from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
@@ -82,26 +83,54 @@ def lk(request):
     try:
         client = Client.objects.get(id=client_id)
         try:
-            order = MealPlanOrder.objects.get(client=client)
+            order = MealPlanOrder.objects.filter(client=client).order_by('-created_at').first()
+            count_meals = order.get_count_meals()
             end_date = order.created_at + relativedelta(months=order.duration_months)
-            dishes = {
-                'Завтрак': Dish.objects.filter(category='breakfast'),
-                'Обед': Dish.objects.filter(category='lunch'),
-                'Ужин': Dish.objects.filter(category='dinner'),
-                'Десерт': Dish.objects.filter(category='dessert'),
+            now = timezone.now()
+            if end_date < now:
+                return render(request, 'lk.html', {
+                    'client': client,
+                    'message': 'Срок действия подписки истёк.',
+                })
+            dishes = {}
+            categories = {
+                'Завтрак': 'breakfast',
+                'Обед': 'lunch',
+                'Ужин': 'dinner',
+                'Десерт': 'dessert',
             }
-            return render(request, 'lk.html', {
+
+            for category, category_name in categories.items():
+                if getattr(order, f"include_{category_name.lower()}"):
+                    meals = Dish.objects.filter(category=category_name)
+                    for meal in meals:
+                        meal.total_price = meal.get_total_price() * order.persons
+
+                    dishes[category] = {
+                        'meals': meals,
+                        'total_quantities': [
+                            (recept.ingredients.name, recept.get_total_quantity(order.persons))
+                            for meal in meals
+                            for recept in meal.recepts.all()
+                        ]
+                    }
+
+            context = {
                 'client': client,
                 'order': order,
                 'dishes': dishes,
                 'end_date': end_date,
-            })
+                'count_meals': count_meals,
+            }
+
+            return render(request, 'lk.html', context)
 
         except MealPlanOrder.DoesNotExist:
             return render(request, 'lk.html', {
                 'client': client,
-                'message': 'У этого клиента нет активного заказа.',
+                'message': 'Нет оплаченной подписки.',
             })
+
     except Client.DoesNotExist:
         pass
 
@@ -128,6 +157,7 @@ def update_profile(request):
         if password:
             client.password = password
         client.save()
+        messages.success(request, 'Изменения успешно сохранены')
 
         return redirect('lk')
 
