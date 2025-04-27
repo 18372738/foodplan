@@ -40,6 +40,9 @@
                         <div class="col-12 col-sm-6 mt-3 d-flex justify-content-center align-items-center">
                             <h6>Уже есть аккаунт? <a href="{% url 'auth' %}" class="link-dark foodplan_green">Войти</a></h6>
                         </div>
+                        {% if error %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
                     </div>
                 </form>
             </div>
