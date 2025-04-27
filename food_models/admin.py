@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
@@ -30,7 +31,7 @@ class ClientAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if form.cleaned_data.get('password'):
-            obj.password = form.cleaned_data['password']
+            obj.password = make_password(form.cleaned_data['password'])
         obj.save()
 
 

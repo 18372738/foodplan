@@ -1,5 +1,6 @@
 import random
 
+from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
@@ -68,11 +69,19 @@ def registration(request):
 def auth(request):
     if request.method == 'POST':
         mail = request.POST.get('mail')
+        password = request.POST.get('password')
+
         try:
             client = Client.objects.get(mail=mail)
-            request.session['client_id'] = client.id
-            return redirect('lk')
+            if check_password(password, client.password):
+                request.session['client_id'] = client.id
+                return redirect('lk')
+            else:
+                messages.error(request, "Неверный пароль")
+                return redirect('auth')
+
         except Client.DoesNotExist:
+            messages.error(request, "Пользователь с таким email не зарегистрирован")
             return redirect('registration')
 
     return render(request, 'auth.html')
@@ -80,59 +89,52 @@ def auth(request):
 
 def lk(request):
     client_id = request.session.get('client_id')
-    try:
-        client = Client.objects.get(id=client_id)
-        try:
-            order = MealPlanOrder.objects.filter(client=client).order_by('-created_at').first()
-            count_meals = order.get_count_meals()
-            end_date = order.created_at + relativedelta(months=order.duration_months)
-            now = timezone.now()
-            if end_date < now:
-                return render(request, 'lk.html', {
-                    'client': client,
-                    'message': 'Срок действия подписки истёк.',
-                })
-            dishes = {}
-            categories = {
-                'Завтрак': 'breakfast',
-                'Обед': 'lunch',
-                'Ужин': 'dinner',
-                'Десерт': 'dessert',
-            }
-
-            for category, category_name in categories.items():
-                if getattr(order, f"include_{category_name.lower()}"):
-                    meals = Dish.objects.filter(category=category_name)
-                    for meal in meals:
-                        meal.total_price = meal.get_total_price() * order.persons
-
-                    dishes[category] = {
-                        'meals': meals,
-                        'total_quantities': [
-                            (recept.ingredients.name, recept.get_total_quantity(order.persons))
-                            for meal in meals
-                            for recept in meal.recepts.all()
-                        ]
-                    }
-
-            context = {
-                'client': client,
-                'order': order,
-                'dishes': dishes,
-                'end_date': end_date,
-                'count_meals': count_meals,
-            }
-
-            return render(request, 'lk.html', context)
-
-        except MealPlanOrder.DoesNotExist:
+    client = Client.objects.get(id=client_id)
+    order = MealPlanOrder.objects.filter(client=client).order_by('-created_at').first()
+    if order is None:
             return render(request, 'lk.html', {
                 'client': client,
-                'message': 'Нет оплаченной подписки.',
+                'message': 'У вас нет активных подписок.',
             })
+    end_date = order.created_at + relativedelta(months=order.duration_months)
+    now = timezone.now()
+    if end_date < now:
+        return render(request, 'lk.html', {
+            'client': client,
+            'message': 'Срок действия подписки истёк.',
+        })
+    dishes = {}
+    categories = {
+        'Завтрак': 'breakfast',
+        'Обед': 'lunch',
+        'Ужин': 'dinner',
+        'Десерт': 'dessert',
+    }
 
-    except Client.DoesNotExist:
-        pass
+    for category, category_name in categories.items():
+        if getattr(order, f"include_{category_name.lower()}"):
+            meals = Dish.objects.filter(category=category_name)
+            for meal in meals:
+                meal.total_price = meal.get_total_price() * order.persons
+
+            dishes[category] = {
+                'meals': meals,
+                'total_quantities': [
+                    (recept.ingredients.name, recept.get_total_quantity(order.persons))
+                    for meal in meals
+                    for recept in meal.recepts.all()
+                ]
+            }
+
+    context = {
+        'client': client,
+        'order': order,
+        'dishes': dishes,
+        'end_date': end_date,
+        'count_meals': order.get_count_meals(),
+    }
+
+    return render(request, 'lk.html', context)
 
 
 def update_profile(request):
@@ -155,7 +157,7 @@ def update_profile(request):
         client.name = name
         client.mail = email
         if password:
-            client.password = password
+            client.password = make_password(password)
         client.save()
         messages.success(request, 'Изменения успешно сохранены')
 
