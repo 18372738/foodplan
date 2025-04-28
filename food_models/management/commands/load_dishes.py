@@ -17,7 +17,8 @@ class Command(BaseCommand):
                 title=dish['title'],
                 img=dish['img'],
                 category=dish['category'],
-                description=dish['description']
+                description=dish['description'],
+                instruction=dish['instruction']
             )
             if created:
                 self.stdout.write(self.style.SUCCESS(f"Добавлен: {dishes}"))
