@@ -144,8 +144,26 @@
                                                                             </li>
                                                                           {% endfor %}
                                                                         </ul>
+                                                                        {% if meal.instruction %}
+                                                                          <div class="accordion mt-3" id="instructionAccordion{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                                                            <div class="accordion-item">
+                                                                              <h2 class="accordion-header" id="instructionHeading{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#instructionCollapse{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false" aria-controls="instructionCollapse{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                                                                  Показать инструкцию
+                                                                                </button>
+                                                                              </h2>
+                                                                              <div id="instructionCollapse{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="instructionHeading{{ forloop.parentloop.counter }}-{{ forloop.counter }}" data-bs-parent="#instructionAccordion{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                                                                <div class="accordion-body">
+                                                                                  {{ meal.instruction|linebreaks }}
+                                                                                </div>
+                                                                              </div>
+                                                                            </div>
+                                                                          </div>
+                                                                        {% endif %}
                                                                       {% else %}
-                                                                        <div><small>Нет ингредиентов</small></div>
+                                                                        <div>
+                                                                          <small>Нет ингредиентов</small>
+                                                                        </div>
                                                                       {% endif %}
                                                                     </div>
                                                                   </div>
@@ -161,6 +179,11 @@
                                                   {% else %}
                                                     <div class="text-center text-muted">Нет оформленной подписки</div>
                                                   {% endif %}
+                                                  <div class="mt-3 text-center">
+                                                    <a href="{% url 'order' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">
+                                                      Оплатить подписку
+                                                    </a>
+                                                  </div>
                                                 </div>
                                               </div>
                                               <div class="col-3 text-muted">
