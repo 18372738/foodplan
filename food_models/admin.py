@@ -47,7 +47,8 @@ class DishAdmin(admin.ModelAdmin):
         'category',
         'img',
         'get_preview',
-        'instruction'
+        'instruction',
+        'display_date'
     ]
     readonly_fields = ['get_preview']
     inlines = [ReceptInline]

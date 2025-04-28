@@ -75,9 +75,14 @@ class Dish(models.Model):
     )
     instruction = models.TextField(
         verbose_name='рецепт',
-        blank=True, 
+        blank=True,
         null=True
         )
+    display_date = models.IntegerField(
+        verbose_name='дата отображения',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name_plural = 'блюда'

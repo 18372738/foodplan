@@ -140,6 +140,8 @@ def lk(request):
             'client': client,
             'message': 'Срок действия подписки истёк.',
         })
+
+    today_day = now.day
     dishes = {}
     categories = {
         'Завтрак': 'breakfast',
@@ -150,7 +152,7 @@ def lk(request):
 
     for category, category_name in categories.items():
         if getattr(order, f"include_{category_name.lower()}"):
-            meals = Dish.objects.filter(category=category_name)
+            meals = Dish.objects.filter(category=category_name, display_date=today_day)
             for meal in meals:
                 meal.total_price = meal.get_total_price() * order.persons
 

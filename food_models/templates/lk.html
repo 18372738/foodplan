@@ -178,12 +178,12 @@
                                                     {% endfor %}
                                                   {% else %}
                                                     <div class="text-center text-muted">Нет оформленной подписки</div>
+                                                      <div class="mt-3 text-center">
+                                                        <a href="{% url 'order' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">
+                                                          Оплатить подписку
+                                                        </a>
+                                                      </div>
                                                   {% endif %}
-                                                  <div class="mt-3 text-center">
-                                                    <a href="{% url 'order' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">
-                                                      Оплатить подписку
-                                                    </a>
-                                                  </div>
                                                 </div>
                                               </div>
                                               <div class="col-3 text-muted">
