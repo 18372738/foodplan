@@ -92,10 +92,11 @@ def registration(request):
                 'error': 'Пользователь с таким email уже существует. Используйте кнопку войти.'
             })
 
+        hashed_password = make_password(password)
         Client.objects.create(
             name=name,
             mail=mail,
-            password=password
+            password=hashed_password
         )
         return redirect('auth')
 
