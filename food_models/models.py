@@ -188,22 +188,3 @@ class MealPlanOrder(models.Model):
 
     def __str__(self):
         return f'{self.client.name} - {self.created_at}'
-
-
-class OptionPrice(models.Model):
-    OPTION_CHOICES = [
-        ('breakfast', 'Завтраки'),
-        ('lunch', 'Обеды'),
-        ('dinner', 'Ужины'),
-        ('dessert', 'Десерты'),
-    ]
-
-    option = models.CharField(max_length=20, choices=OPTION_CHOICES, unique=True)
-    price = models.DecimalField(max_digits=6, decimal_places=2)
-
-    class Meta:
-        verbose_name = 'Цена опции'
-        verbose_name_plural = 'Цены опций'
-
-    def __str__(self):
-        return f'{self.get_option_display()} — {self.price} ₽'

@@ -14,7 +14,7 @@ from yookassa import Configuration, Payment
 from food.settings import API_KEY, SHOP_ID
 
 from .forms import MealPlanOrderForm
-from .models import Client, MealPlanOrder, OptionPrice, Dish
+from .models import Client, MealPlanOrder, Dish
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -22,35 +22,25 @@ def index(request: HttpRequest) -> HttpResponse:
 
 
 def order_view(request):
+    client_id = request.session.get('client_id')
+    client = Client.objects.get(id=client_id)
+
     if request.method == 'POST':
         form = MealPlanOrderForm(request.POST)
         if form.is_valid():
             order = form.save(commit=False)
-            order.client = Client.objects.first()
-            total_price1 = calculate_price_from_form(request.POST)
-            order.total_cost = total_price1
+            order.client = client
+            total_price = calculate_price_from_form(request.POST)
+            order.total_cost = total_price
             order.save()
             form.save_m2m()
-            request.session['total_price_t'] = float(total_price1)
-            return render(request, 'order.html', {'form': form, 'price': total_price1})
+            request.session['total_price_t'] = float(total_price)
+            return render(request, 'order.html', {'form': form, 'price': total_price})
     else:
-        if request.GET.get("select1") is not None:
-            # пользователь что-то выбрал → считаем по GET
-            total_price = calculate_price_from_form(request.GET)
-            form = MealPlanOrderForm(request.GET)
-        else:
-            # первый заход → дефолт
-            dummy_data = {
-                'select1': '0',
-                'select2': '0',
-                'select3': '0',
-                'select4': '0',
-                'select5': '0',
-                # 'select6': '0',
-            }
-            total_price = calculate_price_from_form(dummy_data)
-            form = MealPlanOrderForm()
-        request.session['total_price_t'] = float(total_price)
+        form = MealPlanOrderForm()
+        total_price = calculate_price_from_form(request.GET or {})
+
+    request.session['total_price_t'] = float(total_price)
 
     return render(request, 'order.html', {'form': form, 'price': total_price})
 
@@ -210,22 +200,7 @@ def get_option_price(option_key):
 
 
 def calculate_price_from_form(post_data):
-    base_price = 0
-
-    def get(option_key):
-        try:
-            return OptionPrice.objects.get(option=option_key).price
-        except OptionPrice.DoesNotExist:
-            return 0
-
-    if post_data.get("select1") == "0":
-        base_price += get("breakfast")
-    if post_data.get("select2") == "0":
-        base_price += get("lunch")
-    if post_data.get("select3") == "0":
-        base_price += get("dinner")
-    if post_data.get("select4") == "0":
-        base_price += get("dessert")
+    cost_per_month = 599
 
     persons_raw = post_data.get("select6")
     if persons_raw is not None:
@@ -239,7 +214,7 @@ def calculate_price_from_form(post_data):
     else:
         duration = 3
 
-    total_price = base_price * persons * duration
+    total_price = cost_per_month * persons * duration
     return total_price
 
 
