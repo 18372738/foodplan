@@ -130,13 +130,16 @@
                 </form>
 
                 <div class="d-flex justify-content-center my-5">
-                    <button type="submit" id="btnContinue"
-                        class="btn btn-outline-success foodplan_green foodplan__border_green w-50">Продолжить</button>
-                    <script>
-                        document.getElementById('btnContinue').addEventListener('click', () => {
-                            document.getElementById('TableSubmit').click()
-                        })
-                    </script>
+                    <form action="{% url 'payment' %}" method="get">
+                        <button type="submit" id="btnContinue"
+                                class="btn btn-outline-success foodplan_green foodplan__border_green w-50">Оплатить
+                        </button>
+                        <script>
+                            document.getElementById('btnContinue').addEventListener('click', () => {
+                                document.getElementById('TableSubmit').click()
+                            })
+                        </script>
+                    </form>
                 </div>
             </div>
         </section>

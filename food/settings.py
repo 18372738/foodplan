@@ -15,6 +15,9 @@ DEBUG = env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
+API_KEY = env.str("API_KEY")
+SHOP_ID = env.str("SHOP_ID")
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

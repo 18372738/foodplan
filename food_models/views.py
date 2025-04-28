@@ -1,5 +1,7 @@
 import random
+import uuid
 
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -8,6 +10,8 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
+from yookassa import Configuration, Payment
+from food.settings import API_KEY, SHOP_ID
 
 from .forms import MealPlanOrderForm
 from .models import Client, MealPlanOrder, OptionPrice, Dish
@@ -23,11 +27,12 @@ def order_view(request):
         if form.is_valid():
             order = form.save(commit=False)
             order.client = Client.objects.first()
-            total_price = calculate_price_from_form(request.POST)
-            order.total_cost = total_price
+            total_price1 = calculate_price_from_form(request.POST)
+            order.total_cost = total_price1
             order.save()
             form.save_m2m()
-            return render(request, 'order.html', {'form': form, 'price': total_price})
+            request.session['total_price_t'] = float(total_price1)
+            return render(request, 'order.html', {'form': form, 'price': total_price1})
     else:
         if request.GET.get("select1") is not None:
             # пользователь что-то выбрал → считаем по GET
@@ -45,8 +50,30 @@ def order_view(request):
             }
             total_price = calculate_price_from_form(dummy_data)
             form = MealPlanOrderForm()
+        request.session['total_price_t'] = float(total_price)
 
     return render(request, 'order.html', {'form': form, 'price': total_price})
+
+
+def payment(request):
+    """Оплата заказа."""
+    Configuration.account_id = SHOP_ID
+    Configuration.secret_key = API_KEY
+    total_price = request.session.get('total_price_t', 100.0)
+    payment = Payment.create({
+        "amount": {
+            "value": f"{total_price}",
+            "currency": "RUB"
+        },
+        "confirmation": {
+            "type": "redirect",
+            "return_url": "http://127.0.0.1:8000/order/"
+        },
+        "capture": True,
+        "description": "Оплата заказа"
+    }, uuid.uuid4())
+
+    return HttpResponseRedirect(payment.confirmation.confirmation_url)
 
 
 def registration(request):
@@ -220,11 +247,15 @@ def calculate_price_api(request):
 
 
 def show_random_recipe(request):
-    all_dishes = list(Dish.objects.get_total_price())
+    all_dishes = list(Dish.objects.all())
     today = timezone.now().date()
     random.seed(today.toordinal())
     selected_dish = random.choice(all_dishes)
+    total_price = selected_dish.get_total_price()
 
-    context = {'recept': selected_dish}
+    context = {
+        'recept': selected_dish,
+        'total_price': total_price
+    }
 
     return render(request, 'recept.html', context)

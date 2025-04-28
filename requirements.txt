@@ -3,3 +3,5 @@ environs==14.1.1
 phonenumbers==8.13.54
 django-phonenumber-field==8.0.0
 pillow==11.0.0
+python-dateutil==2.9.0.post0
+yookassa==3.5.0
