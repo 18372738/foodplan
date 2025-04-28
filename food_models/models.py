@@ -73,6 +73,11 @@ class Dish(models.Model):
         max_length=100,
         choices=CATEGORIES
     )
+    instruction = models.TextField(
+        verbose_name='рецепт',
+        blank=True, 
+        null=True
+        )
 
     class Meta:
         verbose_name_plural = 'блюда'
