@@ -25,31 +25,43 @@ def order_view(request):
     client_id = request.session.get('client_id')
     client = Client.objects.get(id=client_id)
 
-    if request.method == 'POST':
-        form = MealPlanOrderForm(request.POST)
-        if form.is_valid():
-            order = form.save(commit=False)
-            order.client = client
-            total_price = calculate_price_from_form(request.POST)
-            order.total_cost = total_price
-            order.save()
-            form.save_m2m()
-            request.session['total_price_t'] = float(total_price)
-            return render(request, 'order.html', {'form': form, 'price': total_price})
-    else:
-        form = MealPlanOrderForm()
-        total_price = calculate_price_from_form(request.GET or {})
+    form = MealPlanOrderForm(request.POST or None)
+    total_price = 599 * 3 * 1
 
-    request.session['total_price_t'] = float(total_price)
+    if request.method == 'POST' and form.is_valid():
+        order = form.save(commit=False)
+        order.client = client
+        order.include_breakfast = bool(request.POST.get('select1') == '0')
+        order.include_lunch = bool(request.POST.get('select2') == '0')
+        order.include_dinner = bool(request.POST.get('select3') == '0')
+        order.include_dessert = bool(request.POST.get('select4') == '0')
+        order.duration_months = int(request.POST.get('duration_months', 3))
+        persons_raw = request.POST.get('persons', 1)
+        order.persons = int(persons_raw) + 1
+        total_price = calculate_price_from_form(request.POST)
+        order.total_cost = total_price
+        order.save()
+        request.session['order_id'] = order.id
+
+        return redirect('payment', order_id=order.id)
+
+    if request.GET:
+        total_price = calculate_price_from_form(request.GET)
 
     return render(request, 'order.html', {'form': form, 'price': total_price})
 
 
-def payment(request):
+def payment(request, order_id=None):
     """Оплата заказа."""
     Configuration.account_id = SHOP_ID
     Configuration.secret_key = API_KEY
-    total_price = request.session.get('total_price_t', 100.0)
+
+    try:
+        order = MealPlanOrder.objects.get(id=order_id)
+    except MealPlanOrder.DoesNotExist:
+        return redirect('order')
+
+    total_price = order.total_cost
     payment = Payment.create({
         "amount": {
             "value": f"{total_price}",
@@ -57,10 +69,10 @@ def payment(request):
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": "http://127.0.0.1:8000/order/"
+            "return_url": "http://127.0.0.1:8000/lk/"
         },
         "capture": True,
-        "description": "Оплата заказа"
+        "description": f"Оплата заказа №{order.id} клиента {order.client.name}"
     }, uuid.uuid4())
 
     return HttpResponseRedirect(payment.confirmation.confirmation_url)
@@ -201,20 +213,23 @@ def get_option_price(option_key):
 
 def calculate_price_from_form(post_data):
     cost_per_month = 599
-
-    persons_raw = post_data.get("select6")
-    if persons_raw is not None:
-        persons = int(persons_raw) + 1
-    else:
-        persons = 1
-
-    duration_raw = post_data.get("duration")
-    if duration_raw is not None:
-        duration = int(duration_raw)
-    else:
+    if not post_data:
         duration = 3
+        persons = 1
+    else:
+        duration_raw = post_data.get("duration_months")
+        if duration_raw is not None:
+            duration = int(duration_raw)
+        else:
+            duration = 3
 
-    total_price = cost_per_month * persons * duration
+        persons_raw = post_data.get("persons")
+        if persons_raw is not None:
+            persons = int(persons_raw) + 1
+        else:
+            persons = 1
+
+    total_price = cost_per_month * duration * persons
     return total_price
 
 
