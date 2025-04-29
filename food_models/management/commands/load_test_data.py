@@ -31,7 +31,8 @@ class Command(BaseCommand):
                 img=dish['img'],
                 category=dish['category'],
                 description=dish['description'],
-                instruction=dish['instruction']
+                instruction=dish['instruction'],
+                display_date=29
             )
             for product in dish['ingredients']:
                 recepts, cre = Recept.objects.update_or_create(
