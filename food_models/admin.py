@@ -1,4 +1,6 @@
 import openpyxl
+
+from django.shortcuts import reverse, redirect
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 from django.contrib import admin
@@ -57,8 +59,12 @@ class ClientAdmin(admin.ModelAdmin):
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
     list_display = [
+        'get_image_list_preview',
         'title',
         'description',
+    ]
+    list_display_links = [
+        'title',
     ]
     fields = [
         'title',
@@ -79,6 +85,13 @@ class DishAdmin(admin.ModelAdmin):
             '200px',
         )
     get_preview.short_description = 'превью'
+
+    def get_image_list_preview(self, obj):
+        if not obj.img or not obj.id:
+            return 'нет картинки'
+        edit_url = reverse('admin:food_models_dish_change', args=(obj.id,))
+        return format_html('<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>', edit_url=edit_url, src=obj.img.url)
+    get_image_list_preview.short_description = 'превью'
 
 
 @admin.register(Ingredient)
