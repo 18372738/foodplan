@@ -1,7 +1,11 @@
+import openpyxl
+from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 from django.contrib import admin
 from django.utils.html import format_html
+from django.db.models import Sum
 from django import forms
+from django.db import models
 
 from .models import Client, Dish, Ingredient, Recept, MealPlanOrder
 
@@ -22,6 +26,21 @@ class ClientAdminForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = '__all__'
+
+
+class CreatedMonthFilter(admin.SimpleListFilter):
+    title = ('Месяц создания')
+    parameter_name = 'created_month'
+
+    def lookups(self, request, model_admin):
+        months = MealPlanOrder.objects.dates('created_at', 'month')
+        return [(date.strftime('%Y-%m'), date.strftime('%B %Y')) for date in months]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            year, month = map(int, self.value().split('-'))
+            return queryset.filter(created_at__year=year, created_at__month=month)
+        return queryset
 
 
 @admin.register(Client)
@@ -67,6 +86,37 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = ['name', 'unit', 'price']
 
 
+def export_to_excel(modeladmin, request, queryset):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Заказы"
+
+    headers = [
+        'ID', 'Клиент', 'Месяцы', 'Завтрак', 'Обед', 'Ужин', 'Десерт',
+        'Персоны', 'Стоимость', 'Создан'
+    ]
+    ws.append(headers)
+
+    for order in queryset:
+        ws.append([
+            order.id,
+            str(order.client),
+            order.duration_months,
+            'Да' if order.include_breakfast else 'Нет',
+            'Да' if order.include_lunch else 'Нет',
+            'Да' if order.include_dinner else 'Нет',
+            'Да' if order.include_dessert else 'Нет',
+            order.persons,
+            float(order.total_cost),
+            order.created_at.strftime('%Y-%m-%d %H:%M'),
+        ])
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=mealplan_orders.xlsx'
+    wb.save(response)
+    return response
+export_to_excel.short_description = "Выгрузить в Excel"
+
+
 @admin.register(MealPlanOrder)
 class MealPlanOrderAdmin(admin.ModelAdmin):
     list_display = (
@@ -81,5 +131,6 @@ class MealPlanOrderAdmin(admin.ModelAdmin):
         'total_cost',
         'created_at',
     )
-    list_filter = ('duration_months', 'include_breakfast', 'include_lunch', 'include_dinner')
+    list_filter = (CreatedMonthFilter,)
     search_fields = ('id', 'client__name')
+    actions = [export_to_excel]
