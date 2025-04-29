@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     ingredients=Ingredient.objects.get(name__contains=product),
                     quantity=random.randrange(1, 4)
                 )
-                if created:
+                if cre:
                     self.stdout.write(self.style.SUCCESS(f"Добавлен продукт к блюду: {product}"))
                 else:
                     self.stdout.write(self.style.SUCCESS(f"Обновлен продукт к блюду: {product}"))
